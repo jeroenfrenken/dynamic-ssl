@@ -27,7 +27,8 @@ services:
     networks:
       - dynamic-ssl-network
   db:
-    image: postgres:11.6
+    build:
+      context: ./docker/postgres
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
