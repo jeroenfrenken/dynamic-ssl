@@ -1,0 +1,45 @@
+version: '3'
+services:
+  web:
+    build:
+      context: ./docker/openresty
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_DATABASE: ${DB_DATABASE}
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./docker/openresty/config/server.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      # Add Lua scripts
+      - ./docker/openresty/config/http.lua:/usr/src/openresty/http.lua
+      - ./docker/openresty/config/https.lua:/usr/src/openresty/https.lua
+      # Add fallback certificates
+      - ./docker/openresty/static/localhost.cert:/usr/src/openresty/localhost.cert
+      - ./docker/openresty/static/localhost.key:/usr/src/openresty/localhost.key
+      # Add a static page for debugging purpose
+      - ./docker/openresty/static/index.html:/usr/src/app/index.html
+    depends_on:
+      - db
+    networks:
+      - dynamic-ssl-network
+  db:
+    image: postgres:11.6
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_DATABASE}
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - 5001:5432
+    networks:
+      - dynamic-ssl-network
+
+networks:
+  dynamic-ssl-network:
+    driver: bridge
